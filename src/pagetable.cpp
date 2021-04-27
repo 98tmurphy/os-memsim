@@ -64,8 +64,34 @@ void PageTable::print()
 
     std::vector<std::string> keys = sortedKeys();
 
+    char * token;
+    std::string temp = "";
+    std::string hold = "";
+    std::pageNum;
+    int len;
+    int frame;
+
     for (i = 0; i < keys.size(); i++)
     {
-        //pri
+        //prints the pid
+        token = strtok(keys[i], "|");
+        std::cout << " " << token << " |";
+
+        //prints the page number
+        len = keys[i].size() - token.size() - 2;
+        pageNum = keys[i].substr(len,keys[i].size()-1);
+        temp = "";
+        while(temp.size() + pageNum.size() != 12){
+            temp = temp + " ";
+        }
+        std::cout << temp << pageNum << " |";
+
+        //prints the frame number
+        frame = _table[keys[i]];
+        hold = std::to_string(frame);
+        while(temp.size() + hold.size() != 13){
+            temp = temp + " ";
+        }
+        std::cout << temp << hold << " " << std::endl;
     }
 }
