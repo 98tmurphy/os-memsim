@@ -36,11 +36,50 @@ int main(int argc, char **argv)
     std::string command;
     std::cout << "> ";
     std::getline (std::cin, command);
+    std::vector<std::string> tokens;
+    std::string token;
+    
     while (command != "exit") {
         // Handle command
         // TODO: implement this!
 
+        //splits the command into tokens in the vector, probably should find a better way
+        //there could be a lot of errors with this method
+        int pos = 0;
+        while((pos = command.find(" ")) != std::string::npos){
+            token = command.substr(0,pos);
+            tokens.push_back(token);
+            command.erase(0,pos+1);
+        }
+        tokens.push_back(command);
+
+        // create command
+        if(tokens[0] == "create"){
+            int text_size = stoi(tokens[1],0,10);
+            int data_size = stoi(tokens[2],0,10);
+            std::cout << text_size << " " << data_size << std::endl;
+            createProcess(text_size, data_size, mmu, page_table);
+        }
+
+        // print command
+        if(tokens[0] == "print"){
+            if(tokens[1] == "mmu"){
+                mmu->print();
+            }
+            else if(tokens[1] == "page"){
+                page_table->print();
+            }
+            else if(tokens[1] == "process"){
+                //print a list of PIDs for processes that are still running
+            }
+            else if(false){ //"<PID:<var_name>", print the value of the variable for that process
+                
+            }
+            //Print an error message
+        }
+
         // Get next command
+        tokens.clear();
         std::cout << "> ";
         std::getline (std::cin, command);
     }
@@ -76,6 +115,9 @@ void createProcess(int text_size, int data_size, Mmu *mmu, PageTable *page_table
     //   - create new process in the MMU
     //   - allocate new variables for the <TEXT>, <GLOBALS>, and <STACK>
     //   - print pid
+
+    int pid = mmu->createProcess();
+    std::cout << pid << std::endl;
 }
 
 void allocateVariable(uint32_t pid, std::string var_name, DataType type, uint32_t num_elements, Mmu *mmu, PageTable *page_table)
