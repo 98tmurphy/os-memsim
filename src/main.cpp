@@ -57,12 +57,15 @@ int main(int argc, char **argv)
         if(tokens[0] == "create"){
             int text_size = stoi(tokens[1],0,10);
             int data_size = stoi(tokens[2],0,10);
-            std::cout << text_size << " " << data_size << std::endl;
             createProcess(text_size, data_size, mmu, page_table);
         }
 
+        else if(tokens[0] == "allocate"){
+            //allocateVariable(tokens[1],tokens[2],)
+        }
+
         // print command
-        if(tokens[0] == "print"){
+        else if(tokens[0] == "print"){
             if(tokens[1] == "mmu"){
                 mmu->print();
             }
@@ -70,12 +73,26 @@ int main(int argc, char **argv)
                 page_table->print();
             }
             else if(tokens[1] == "process"){
-                //print a list of PIDs for processes that are still running
+                mmu->printProcessesIDs();
             }
             else if(false){ //"<PID:<var_name>", print the value of the variable for that process
-                
+
             }
-            //Print an error message
+            else{
+                std::cout << "error: command not recognized" << std::endl;
+            }
+        }
+
+        else if(tokens[0] == "free"){
+            freeVariable(stoi(tokens[1],0,10),tokens[2],mmu,page_table);
+        }
+
+        else if(tokens[0] == "terminate"){
+            terminateProcess(stoi(tokens[1],0,10), mmu, page_table);
+        }
+
+        else{
+            std::cout << "error: command not recognized" << std::endl;
         }
 
         // Get next command
@@ -117,6 +134,9 @@ void createProcess(int text_size, int data_size, Mmu *mmu, PageTable *page_table
     //   - print pid
 
     int pid = mmu->createProcess();
+    mmu->addVariableToProcess(pid,"<TEXT>",DataType::Char,text_size,8131658);
+    mmu->addVariableToProcess(pid,"<GLOBALS>",DataType::Char,data_size,32);
+    mmu->addVariableToProcess(pid,"<STACK>",DataType::Char,65536,0);
     std::cout << pid << std::endl;
 }
 
@@ -143,6 +163,15 @@ void freeVariable(uint32_t pid, std::string var_name, Mmu *mmu, PageTable *page_
     // TODO: implement this!
     //   - remove entry from MMU
     //   - free page if this variable was the only one on a given page
+    if(!mmu->pidExists(pid)){
+        std::cout << "error: process not found" << std::endl;
+    }
+    else if(!mmu->varExists(pid,var_name)){
+        std::cout << "error: variable not found" << std::endl;
+    }
+    else{
+        mmu->removeVariable(pid,var_name);
+    }
 }
 
 void terminateProcess(uint32_t pid, Mmu *mmu, PageTable *page_table)
@@ -150,4 +179,10 @@ void terminateProcess(uint32_t pid, Mmu *mmu, PageTable *page_table)
     // TODO: implement this!
     //   - remove process from MMU
     //   - free all pages associated with given process
+    if(mmu->pidExists(pid)){
+        mmu->removeProcess(pid);
+    }
+    else{
+        std::cout << "error: process not found" << std::endl;
+    }
 }
