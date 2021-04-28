@@ -143,3 +143,16 @@ int Mmu::getNextVirtualAddr(int pid){
     }
     return sumOfAddrs;
 }
+
+uint32_t Mmu::getVirtualAddr(int pid, std::string var){
+    for(int i = 0; i < _processes.size(); i++){
+        if(_processes[i]->pid == pid){
+            for(int j = 0; j < _processes[i]->variables.size();j++){
+                if(_processes[i]->variables[j]->name == var){
+                    return _processes[i]->variables[j]->virtual_address - _max_size;
+                }
+            }
+        }
+    }
+    return -1;
+}

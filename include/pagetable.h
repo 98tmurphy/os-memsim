@@ -38,7 +38,7 @@ public:
     int getPhysicalAddress(uint32_t pid, uint32_t virtual_address);
     void print();
     void terminateProcess(uint32_t pid);
-    void removeVariable(uint32_t pid, std::string var);
+    void removeVariable(uint32_t pid, uint32_t virtualAddr);
 };
 
 #endif // __PAGETABLE_H_

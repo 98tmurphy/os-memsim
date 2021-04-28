@@ -183,8 +183,9 @@ void freeVariable(uint32_t pid, std::string var_name, Mmu *mmu, PageTable *page_
         std::cout << "error: variable not found" << std::endl;
     }
     else{
+        uint32_t virtualAddr = mmu->getVirtualAddr(pid,var_name);
         mmu->removeVariable(pid,var_name);
-        page_table->removeVariable(pid,var_name);
+        page_table->removeVariable(pid,virtualAddr);
     }
 }
 

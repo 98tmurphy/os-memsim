@@ -38,6 +38,7 @@ public:
     bool varExists(uint32_t pid, std::string var);
     void printProcessesIDs();
     int getNextVirtualAddr(int pid);
+    uint32_t getVirtualAddr(int pid, std::string var);
 };
 
 #endif // __MMU_H_

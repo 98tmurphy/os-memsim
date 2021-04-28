@@ -110,7 +110,10 @@ void PageTable::terminateProcess(uint32_t pid){
     }
 }
 
-void PageTable::removeVariable(uint32_t pid, std::string var){
-    std::string hold = std::to_string(pid) + "|" + var;
+void PageTable::removeVariable(uint32_t pid, uint32_t virtualAddr){
+    std::cout << "Virtual Addr: " << virtualAddr << std::endl;
+    int page_number = virtualAddr / _page_size;
+    std::cout << "page number: " << page_number << std::endl;
+    std::string hold = std::to_string(pid) + "|" + std::to_string(page_number);
     _table.erase(hold);
 }
