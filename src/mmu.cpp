@@ -61,25 +61,16 @@ void Mmu::print()
     {
         for (j = 0; j < _processes[i]->variables.size(); j++)
         {
-            // TODO: print all variables (excluding <FREE_SPACE> entries)
             if(_processes[i]->variables[j]->name != "<FREE_SPACE>"){
-                std::cout << _processes[i]->pid << "  | ";
+                std::cout << " " << _processes[i]->pid << " | ";
+
                 std::string hold = _processes[i]->variables[j]->name;
                 while(hold.size() != 14){
                     hold = hold + " ";
                 }
                 std::cout << hold << "|   ";
-                hold = "0x";
-                for(uint64_t k = _processes[i]->variables[j]->virtual_address; k < 2147483648; k*=16){
-                    if(k != _processes[i]->variables[j]->virtual_address){
-                        hold = hold + "0";
-                    }
-                    else if(k == 0){
-                        k = 1;
-                    }
-                }
-                std::cout << hold;
-                std::cout << std::hex << _processes[i]->variables[j]->virtual_address;
+
+                printf("0x%08x",_processes[i]->variables[j]->virtual_address);
                 std::cout << " | ";
 
                 std::string temp = std::to_string(_processes[i]->variables[j]->size);
@@ -139,4 +130,16 @@ void Mmu::printProcessesIDs(){
     for(int i = 0; i < _processes.size(); i++){
         std::cout << _processes[i]->pid << std::endl;
     }
+}
+
+int Mmu::getNextVirtualAddr(int pid){
+    int sumOfAddrs = -1 * _max_size;
+    for(int i = 0; i < _processes.size(); i++){
+        if(_processes[i]->pid == pid){
+            for(int j = 0; j < _processes[i]->variables.size();j++){
+                sumOfAddrs += _processes[i]->variables[j]->size;
+            }
+        }
+    }
+    return sumOfAddrs;
 }

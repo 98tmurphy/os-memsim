@@ -64,6 +64,10 @@ int main(int argc, char **argv)
             //allocateVariable(tokens[1],tokens[2],)
         }
 
+        else if(tokens[0] == "set"){
+
+        }
+
         // print command
         else if(tokens[0] == "print"){
             if(tokens[1] == "mmu"){
@@ -134,9 +138,18 @@ void createProcess(int text_size, int data_size, Mmu *mmu, PageTable *page_table
     //   - print pid
 
     int pid = mmu->createProcess();
-    mmu->addVariableToProcess(pid,"<TEXT>",DataType::Char,text_size,8131658);
-    mmu->addVariableToProcess(pid,"<GLOBALS>",DataType::Char,data_size,32);
-    mmu->addVariableToProcess(pid,"<STACK>",DataType::Char,65536,0);
+    int virAddr = mmu->getNextVirtualAddr(pid);
+    mmu->addVariableToProcess(pid,"<TEXT>",DataType::Char,text_size,virAddr);
+    page_table->addEntry(pid,0);
+
+    virAddr = mmu->getNextVirtualAddr(pid);
+    mmu->addVariableToProcess(pid,"<GLOBALS>",DataType::Char,data_size,virAddr);
+    page_table->addEntry(pid,1);
+
+    virAddr = mmu->getNextVirtualAddr(pid);
+    mmu->addVariableToProcess(pid,"<STACK>",DataType::Char,65536,virAddr);
+    page_table->addEntry(pid,2);
+    
     std::cout << pid << std::endl;
 }
 
@@ -171,6 +184,7 @@ void freeVariable(uint32_t pid, std::string var_name, Mmu *mmu, PageTable *page_
     }
     else{
         mmu->removeVariable(pid,var_name);
+        page_table->removeVariable(pid,var_name);
     }
 }
 
@@ -181,6 +195,7 @@ void terminateProcess(uint32_t pid, Mmu *mmu, PageTable *page_table)
     //   - free all pages associated with given process
     if(mmu->pidExists(pid)){
         mmu->removeProcess(pid);
+        page_table->terminateProcess(pid);
     }
     else{
         std::cout << "error: process not found" << std::endl;

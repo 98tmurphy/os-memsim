@@ -32,15 +32,15 @@ void PageTable::addEntry(uint32_t pid, int page_number)
     int frame = 0; 
     // Find free frame
     // TODO: implement this!
+
     _table[entry] = frame;
 }
 
 int PageTable::getPhysicalAddress(uint32_t pid, uint32_t virtual_address)
 {
     // Convert virtual address to page_number and page_offset
-    // TODO: implement this!
-    int page_number = 0;
-    int page_offset = 0;
+    int page_number = virtual_address / _page_size;
+    int page_offset = virtual_address % _page_size;
 
     // Combination of pid and page number act as the key to look up frame number
     std::string entry = std::to_string(pid) + "|" + std::to_string(page_number);
@@ -49,7 +49,8 @@ int PageTable::getPhysicalAddress(uint32_t pid, uint32_t virtual_address)
     int address = -1;
     if (_table.count(entry) > 0)
     {
-        // TODO: implement this!
+        int frame = _table[entry];
+        address = frame * _page_size + page_offset;
     }
 
     return address;
@@ -67,26 +68,29 @@ void PageTable::print()
     char * token;
     std::string temp = "";
     std::string hold = "";
-    std::pageNum;
+    std::string pageNum;
     int len;
     int frame;
 
     for (i = 0; i < keys.size(); i++)
     {
         //prints the pid
-        token = strtok(keys[i], "|");
+        char holdPid[keys[i].size()];
+        strcpy(holdPid,keys[i].c_str());
+        token = strtok(holdPid, "|");
         std::cout << " " << token << " |";
 
         //prints the page number
-        len = keys[i].size() - token.size() - 2;
-        pageNum = keys[i].substr(len,keys[i].size()-1);
-        temp = "";
-        while(temp.size() + pageNum.size() != 12){
-            temp = temp + " ";
+        token = strtok(NULL,"|");
+        temp = (std::string)token;
+        hold = "";
+        while(hold.size() + temp.size() != 12){
+            hold += " ";
         }
-        std::cout << temp << pageNum << " |";
+        std::cout << hold << temp << " |";
 
         //prints the frame number
+        temp = "";
         frame = _table[keys[i]];
         hold = std::to_string(frame);
         while(temp.size() + hold.size() != 13){
@@ -94,4 +98,19 @@ void PageTable::print()
         }
         std::cout << temp << hold << " " << std::endl;
     }
+}
+
+void PageTable::terminateProcess(uint32_t pid){
+    std::vector<std::string> keys = sortedKeys();
+    std::string hold(std::to_string(pid));
+    for(int i = 0; i < keys.size(); i++){
+        if(keys[i].find(hold) != std::string::npos){
+            _table.erase(keys[i]);
+        }
+    }
+}
+
+void PageTable::removeVariable(uint32_t pid, std::string var){
+    std::string hold = std::to_string(pid) + "|" + var;
+    _table.erase(hold);
 }
