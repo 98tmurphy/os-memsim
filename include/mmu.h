@@ -39,6 +39,10 @@ public:
     void printProcessesIDs();
     int getNextVirtualAddr(int pid);
     uint32_t getVirtualAddr(int pid, std::string var);
+    uint32_t getVirMemUsed(uint32_t pid);
+    uint32_t getVirAddressOfFreeSpace(uint32_t pid,uint32_t sizeOfVariable);
+    uint32_t removeFreeSpace(uint32_t pid,uint32_t virMemAddr,uint32_t sizeOfVariable, std::string var_name, DataType type);
+    uint32_t getSizeOfFreeSpace(uint32_t pid,uint32_t virMemAddr);
 };
 
 #endif // __MMU_H_

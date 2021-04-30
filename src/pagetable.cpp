@@ -30,10 +30,18 @@ void PageTable::addEntry(uint32_t pid, int page_number)
     std::string entry = std::to_string(pid) + "|" + std::to_string(page_number);
 
     int frame = 0; 
+    bool notFound = true;
     // Find free frame
-    // TODO: implement this!
-
+    while(notFound){
+        if(std::count(usedFrames.begin(), usedFrames.end(), frame) > 0){
+            frame++;
+        }
+        else{
+            notFound = false;
+        }
+    }
     _table[entry] = frame;
+    usedFrames.push_back(frame);
 }
 
 int PageTable::getPhysicalAddress(uint32_t pid, uint32_t virtual_address)
@@ -100,20 +108,21 @@ void PageTable::print()
     }
 }
 
-void PageTable::terminateProcess(uint32_t pid){
-    std::vector<std::string> keys = sortedKeys();
-    std::string hold(std::to_string(pid));
-    for(int i = 0; i < keys.size(); i++){
-        if(keys[i].find(hold) != std::string::npos){
-            _table.erase(keys[i]);
-        }
+uint32_t PageTable::getPageNumber(uint32_t virtualAddr){
+    int numOfOffsetBits = (int)log2(_page_size);
+    int page = virtualAddr >> numOfOffsetBits;
+    if(page == 0){
+        return 0;
+    }
+    else{
+        return page + 1;
     }
 }
 
-void PageTable::removeVariable(uint32_t pid, uint32_t virtualAddr){
-    std::cout << "Virtual Addr: " << virtualAddr << std::endl;
-    int page_number = virtualAddr / _page_size;
-    std::cout << "page number: " << page_number << std::endl;
-    std::string hold = std::to_string(pid) + "|" + std::to_string(page_number);
-    _table.erase(hold);
+bool PageTable::keyExist(uint32_t pid, uint32_t pageNum){
+    std::string entry = std::to_string(pid) + "|" + std::to_string(pageNum);
+    if(_table.find(entry) == _table.end()){
+        return false;
+    }
+    return true;
 }

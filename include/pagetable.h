@@ -7,6 +7,8 @@
 #include <map>
 #include <algorithm>
 #include <string.h>
+#include <stdio.h>
+#include <math.h>
 
 struct PageTableKeyComparator
 {
@@ -29,6 +31,7 @@ private:
     std::map<std::string, int> _table;
 
     std::vector<std::string> sortedKeys();
+    std::vector<int> usedFrames;
 
 public:
     PageTable(int page_size);
@@ -37,8 +40,8 @@ public:
     void addEntry(uint32_t pid, int page_number);
     int getPhysicalAddress(uint32_t pid, uint32_t virtual_address);
     void print();
-    void terminateProcess(uint32_t pid);
-    void removeVariable(uint32_t pid, uint32_t virtualAddr);
+    uint32_t getPageNumber(uint32_t virtualAddr);
+    bool keyExist(uint32_t pid, uint32_t pageNum);
 };
 
 #endif // __PAGETABLE_H_

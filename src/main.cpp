@@ -10,6 +10,7 @@ void allocateVariable(uint32_t pid, std::string var_name, DataType type, uint32_
 void setVariable(uint32_t pid, std::string var_name, uint32_t offset, void *value, Mmu *mmu, PageTable *page_table, void *memory);
 void freeVariable(uint32_t pid, std::string var_name, Mmu *mmu, PageTable *page_table);
 void terminateProcess(uint32_t pid, Mmu *mmu, PageTable *page_table);
+uint32_t calculateSize(DataType type,uint32_t num_elements);
 
 int main(int argc, char **argv)
 {
@@ -61,7 +62,12 @@ int main(int argc, char **argv)
         }
 
         else if(tokens[0] == "allocate"){
-            //allocateVariable(tokens[1],tokens[2],)
+            if(tokens[3] == "char"){
+                allocateVariable(stoi(tokens[1],0,10),tokens[2],DataType::Char,stoi(tokens[4],0,10),mmu,page_table);
+            }
+            if(tokens[3] == "double"){
+                allocateVariable(stoi(tokens[1],0,10),tokens[2],DataType::Double,stoi(tokens[4],0,10),mmu,page_table);
+            }
         }
 
         else if(tokens[0] == "set"){
@@ -136,19 +142,32 @@ void createProcess(int text_size, int data_size, Mmu *mmu, PageTable *page_table
     //   - create new process in the MMU
     //   - allocate new variables for the <TEXT>, <GLOBALS>, and <STACK>
     //   - print pid
+    uint32_t sumOfSpace = 0;
+    uint32_t startPage;
+    uint32_t endPage;
 
     int pid = mmu->createProcess();
+
     int virAddr = mmu->getNextVirtualAddr(pid);
     mmu->addVariableToProcess(pid,"<TEXT>",DataType::Char,text_size,virAddr);
-    page_table->addEntry(pid,0);
+    sumOfSpace += text_size;
+    startPage = 0;
 
     virAddr = mmu->getNextVirtualAddr(pid);
     mmu->addVariableToProcess(pid,"<GLOBALS>",DataType::Char,data_size,virAddr);
-    page_table->addEntry(pid,1);
+    sumOfSpace += data_size;
 
     virAddr = mmu->getNextVirtualAddr(pid);
     mmu->addVariableToProcess(pid,"<STACK>",DataType::Char,65536,virAddr);
-    page_table->addEntry(pid,2);
+    sumOfSpace += 65536;
+
+    endPage = page_table->getPageNumber(sumOfSpace - 1);
+    for(int i = 0; i < endPage; i++){
+        page_table->addEntry(pid,i);
+    }
+
+    mmu->removeVariable(pid,"<FREE_SPACE>");
+    mmu->addVariableToProcess(pid,"<FREESPACE>",DataType::FreeSpace,67108864-sumOfSpace,sumOfSpace);
     
     std::cout << pid << std::endl;
 }
@@ -160,6 +179,29 @@ void allocateVariable(uint32_t pid, std::string var_name, DataType type, uint32_
     //   - if no hole is large enough, allocate new page(s)
     //   - insert variable into MMU
     //   - print virtual memory address
+    if(num_elements == 1){
+        uint32_t sizeOfVariable = calculateSize(type,num_elements); //gets the size of the newly allocated variable
+        uint32_t virMemAddr = mmu->getVirAddressOfFreeSpace(pid,sizeOfVariable);
+        if(virMemAddr != -1){
+            mmu->removeFreeSpace(pid,virMemAddr,sizeOfVariable,var_name,type);
+            uint32_t startPage = page_table->getPageNumber(virMemAddr);
+            uint32_t endPage = page_table->getPageNumber(virMemAddr + sizeOfVariable -1);
+            std::cout << startPage << " " << endPage << std::endl;
+            for(int i = startPage; i <= endPage; i++){
+                if(!page_table->keyExist(pid,i-1)){
+                    page_table->addEntry(pid,i-1);
+                }
+            }
+
+        }
+        //else if there was not a free space found
+    }
+    else{
+        uint32_t sizeOfType = calculateSize(type,1);
+    }
+
+    //calculate the next available page by checking the page_table
+    
 }
 
 void setVariable(uint32_t pid, std::string var_name, uint32_t offset, void *value, Mmu *mmu, PageTable *page_table, void *memory)
@@ -185,7 +227,6 @@ void freeVariable(uint32_t pid, std::string var_name, Mmu *mmu, PageTable *page_
     else{
         uint32_t virtualAddr = mmu->getVirtualAddr(pid,var_name);
         mmu->removeVariable(pid,var_name);
-        page_table->removeVariable(pid,virtualAddr);
     }
 }
 
@@ -196,9 +237,23 @@ void terminateProcess(uint32_t pid, Mmu *mmu, PageTable *page_table)
     //   - free all pages associated with given process
     if(mmu->pidExists(pid)){
         mmu->removeProcess(pid);
-        page_table->terminateProcess(pid);
     }
     else{
         std::cout << "error: process not found" << std::endl;
+    }
+}
+
+uint32_t calculateSize(DataType type, uint32_t num_elements){
+    if(type == DataType::Char){
+        return num_elements;
+    }
+    else if(type == DataType::Short){
+        return 2 * num_elements;
+    }
+    else if(type == DataType::Int || type == DataType::Float){
+        return 4 * num_elements;
+    }
+    else{
+        return 8 * num_elements;
     }
 }

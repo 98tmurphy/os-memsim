@@ -61,7 +61,7 @@ void Mmu::print()
     {
         for (j = 0; j < _processes[i]->variables.size(); j++)
         {
-            if(_processes[i]->variables[j]->name != "<FREE_SPACE>"){
+            //if(_processes[i]->variables[j]->name != "<FREE_SPACE>"){
                 std::cout << " " << _processes[i]->pid << " | ";
 
                 std::string hold = _processes[i]->variables[j]->name;
@@ -79,7 +79,7 @@ void Mmu::print()
                     hold = hold + " ";
                 }
                 std:: cout << hold << temp << std::dec << std::endl;
-            }
+            //}
         }
     }
 }
@@ -149,10 +149,56 @@ uint32_t Mmu::getVirtualAddr(int pid, std::string var){
         if(_processes[i]->pid == pid){
             for(int j = 0; j < _processes[i]->variables.size();j++){
                 if(_processes[i]->variables[j]->name == var){
-                    return _processes[i]->variables[j]->virtual_address - _max_size;
+                    return _processes[i]->variables[j]->virtual_address;
                 }
             }
         }
     }
     return -1;
+}
+
+
+//Start of GOOD METHODS DONT DELETE
+uint32_t Mmu::getVirAddressOfFreeSpace(uint32_t pid,uint32_t sizeOfVariable){
+    uint32_t virAddress = -1;
+    for(int i = 0; i < _processes.size(); i++){
+        if(_processes[i]->pid == pid){
+            for(int j = 0; j < _processes[i]->variables.size();j++){
+                if(_processes[i]->variables[j]->name == "<FREESPACE>" && _processes[i]->variables[j]->size >= sizeOfVariable){
+                    virAddress = _processes[i]->variables[j]->virtual_address;
+                    break;
+                }
+            }
+        }
+    }
+    return virAddress;
+}
+
+uint32_t Mmu::removeFreeSpace(uint32_t pid,uint32_t virMemAddr,uint32_t sizeOfVariable, std::string var_name, DataType type){
+    std::vector<Variable*> newVariables;
+    int currIndex = 0;
+    for(int i = 0; i < _processes.size(); i++){
+        if(_processes[i]->pid == pid){
+            while(_processes[i]->variables[currIndex]->virtual_address < virMemAddr){
+                newVariables.push_back(_processes[i]->variables[currIndex]);
+                currIndex++;
+            }
+            uint32_t newFreeSize = _processes[i]->variables[currIndex]->size - sizeOfVariable;
+            uint32_t newFreeAddr = _processes[i]->variables[currIndex]->virtual_address + sizeOfVariable;
+            addVariableToProcess(pid,var_name,type,sizeOfVariable,virMemAddr);
+            addVariableToProcess(pid,"<FREESPACE>",DataType::FreeSpace,newFreeSize,newFreeAddr);
+            currIndex++;
+            while(currIndex < _processes[i]->variables.size()){
+                newVariables.push_back(_processes[i]->variables[currIndex]);
+                currIndex++;
+            }
+            _processes[i]->variables = newVariables;
+            return 0;
+        }
+    }
+    return -1;
+}
+
+uint32_t PageTable::getSizeOfFreeSpace(uint32_t pid,uint32_t virMemAddr){
+    
 }
