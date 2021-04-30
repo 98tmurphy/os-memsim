@@ -166,8 +166,8 @@ void createProcess(int text_size, int data_size, Mmu *mmu, PageTable *page_table
         page_table->addEntry(pid,i);
     }
 
-    mmu->removeVariable(pid,"<FREE_SPACE>");
-    mmu->addVariableToProcess(pid,"<FREESPACE>",DataType::FreeSpace,67108864-sumOfSpace,sumOfSpace);
+    mmu->removeFirstFree(pid);
+    mmu->addVariableToProcess(pid,"<FREE_SPACE>",DataType::FreeSpace,67108864-sumOfSpace,sumOfSpace);
     
     std::cout << pid << std::endl;
 }
@@ -179,29 +179,33 @@ void allocateVariable(uint32_t pid, std::string var_name, DataType type, uint32_
     //   - if no hole is large enough, allocate new page(s)
     //   - insert variable into MMU
     //   - print virtual memory address
-    if(num_elements == 1){
-        uint32_t sizeOfVariable = calculateSize(type,num_elements); //gets the size of the newly allocated variable
-        uint32_t virMemAddr = mmu->getVirAddressOfFreeSpace(pid,sizeOfVariable);
-        if(virMemAddr != -1){
-            mmu->removeFreeSpace(pid,virMemAddr,sizeOfVariable,var_name,type);
-            uint32_t startPage = page_table->getPageNumber(virMemAddr);
-            uint32_t endPage = page_table->getPageNumber(virMemAddr + sizeOfVariable -1);
-            std::cout << startPage << " " << endPage << std::endl;
-            for(int i = startPage; i <= endPage; i++){
-                if(!page_table->keyExist(pid,i-1)){
-                    page_table->addEntry(pid,i-1);
-                }
-            }
-
+    uint32_t sizeOfVariable = calculateSize(type,num_elements);
+    uint32_t sizeOfType = calculateSize(type,1);
+    uint32_t amountStored = 0;
+    while(amountStored != num_elements){
+        uint32_t virMemAddr = mmu->getVirAddressOfFreeSpace(pid,sizeOfType);
+        uint32_t sizeOfFreeSpace = mmu->getSizeOfFreeSpace(pid,virMemAddr);
+        uint32_t usableSpace = (sizeOfFreeSpace-(sizeOfFreeSpace % sizeOfType));
+        uint32_t startPage = page_table->getPageNumber(virMemAddr);
+        uint32_t endPage = 0;
+        if(usableSpace < sizeOfVariable){
+            mmu->removeFreeSpace(pid,virMemAddr,usableSpace,var_name,type); //LOOK AT REMOVE FREE SPACE
+            amountStored += usableSpace / sizeOfType;
+            sizeOfVariable = sizeOfVariable - usableSpace;
+            endPage = page_table->getPageNumber(virMemAddr + usableSpace -1);
         }
-        //else if there was not a free space found
-    }
-    else{
-        uint32_t sizeOfType = calculateSize(type,1);
-    }
+        else{
+            mmu->removeFreeSpace(pid,virMemAddr,sizeOfVariable,var_name,type); //LOOK AT REMOVE FREE SPACE
+            amountStored = num_elements;
+            endPage = page_table->getPageNumber(virMemAddr + sizeOfVariable -1);
+        }
 
-    //calculate the next available page by checking the page_table
-    
+        for(int i = startPage; i <= endPage; i++){
+            if(!page_table->keyExist(pid,i-1)){
+                page_table->addEntry(pid,i-1);
+            }
+        }
+    }
 }
 
 void setVariable(uint32_t pid, std::string var_name, uint32_t offset, void *value, Mmu *mmu, PageTable *page_table, void *memory)
@@ -218,6 +222,7 @@ void freeVariable(uint32_t pid, std::string var_name, Mmu *mmu, PageTable *page_
     // TODO: implement this!
     //   - remove entry from MMU
     //   - free page if this variable was the only one on a given page
+
     if(!mmu->pidExists(pid)){
         std::cout << "error: process not found" << std::endl;
     }
@@ -226,7 +231,7 @@ void freeVariable(uint32_t pid, std::string var_name, Mmu *mmu, PageTable *page_
     }
     else{
         uint32_t virtualAddr = mmu->getVirtualAddr(pid,var_name);
-        mmu->removeVariable(pid,var_name);
+        mmu->removeVariable(pid,var_name,virtualAddr);
     }
 }
 
@@ -236,7 +241,10 @@ void terminateProcess(uint32_t pid, Mmu *mmu, PageTable *page_table)
     //   - remove process from MMU
     //   - free all pages associated with given process
     if(mmu->pidExists(pid)){
+        uint32_t largestPageNum = page_table->getPageNumber(mmu->getLargestVirtualAddress(pid));
+        page_table->removeProcess(pid,largestPageNum);
         mmu->removeProcess(pid);
+
     }
     else{
         std::cout << "error: process not found" << std::endl;

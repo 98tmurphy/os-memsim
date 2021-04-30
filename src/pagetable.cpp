@@ -126,3 +126,11 @@ bool PageTable::keyExist(uint32_t pid, uint32_t pageNum){
     }
     return true;
 }
+
+void PageTable::removeProcess(uint32_t pid, uint32_t largestPage){
+    std::string entry;
+    for(int i = 0; i < largestPage; i++){
+        entry = std::to_string(pid) + "|" + std::to_string(i);
+        _table.erase(entry);
+    }
+}

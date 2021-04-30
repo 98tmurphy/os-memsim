@@ -33,7 +33,7 @@ public:
     void addVariableToProcess(uint32_t pid, std::string var_name, DataType type, uint32_t size, uint32_t address);
     void print();
     void removeProcess(uint32_t pid);
-    void removeVariable(uint32_t pid, std::string var);
+    void removeVariable(uint32_t pid, std::string var, uint32_t virtualAddr);
     bool pidExists(uint32_t pid);
     bool varExists(uint32_t pid, std::string var);
     void printProcessesIDs();
@@ -43,6 +43,8 @@ public:
     uint32_t getVirAddressOfFreeSpace(uint32_t pid,uint32_t sizeOfVariable);
     uint32_t removeFreeSpace(uint32_t pid,uint32_t virMemAddr,uint32_t sizeOfVariable, std::string var_name, DataType type);
     uint32_t getSizeOfFreeSpace(uint32_t pid,uint32_t virMemAddr);
+    void removeFirstFree(uint32_t pid);
+    uint32_t getLargestVirtualAddress(uint32_t pid);
 };
 
 #endif // __MMU_H_

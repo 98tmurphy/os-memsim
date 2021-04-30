@@ -42,6 +42,7 @@ public:
     void print();
     uint32_t getPageNumber(uint32_t virtualAddr);
     bool keyExist(uint32_t pid, uint32_t pageNum);
+    void removeProcess(uint32_t pid,uint32_t largetPage);
 };
 
 #endif // __PAGETABLE_H_
