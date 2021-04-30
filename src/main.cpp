@@ -65,8 +65,20 @@ int main(int argc, char **argv)
             if(tokens[3] == "char"){
                 allocateVariable(stoi(tokens[1],0,10),tokens[2],DataType::Char,stoi(tokens[4],0,10),mmu,page_table);
             }
+            if(tokens[3] == "short"){
+                allocateVariable(stoi(tokens[1],0,10),tokens[2],DataType::Short,stoi(tokens[4],0,10),mmu,page_table);
+            }
+            if(tokens[3] == "int"){
+                allocateVariable(stoi(tokens[1],0,10),tokens[2],DataType::Int,stoi(tokens[4],0,10),mmu,page_table);
+            }
+            if(tokens[3] == "float"){
+                allocateVariable(stoi(tokens[1],0,10),tokens[2],DataType::Float,stoi(tokens[4],0,10),mmu,page_table);
+            }
             if(tokens[3] == "double"){
                 allocateVariable(stoi(tokens[1],0,10),tokens[2],DataType::Double,stoi(tokens[4],0,10),mmu,page_table);
+            }
+            if(tokens[3] == "long"){
+                allocateVariable(stoi(tokens[1],0,10),tokens[2],DataType::Long,stoi(tokens[4],0,10),mmu,page_table);
             }
         }
 
@@ -76,6 +88,8 @@ int main(int argc, char **argv)
 
         // print command
         else if(tokens[0] == "print"){
+            int pos;
+            std::string token2 = (std::string)tokens[2];
             if(tokens[1] == "mmu"){
                 mmu->print();
             }
@@ -85,11 +99,11 @@ int main(int argc, char **argv)
             else if(tokens[1] == "process"){
                 mmu->printProcessesIDs();
             }
-            else if(false){ //"<PID:<var_name>", print the value of the variable for that process
-
-            }
-            else{
-                std::cout << "error: command not recognized" << std::endl;
+            //this aint working
+            else if((pos = token2.find(":")) != std::string::npos){ //"<PID:<var_name>", print the value of the variable for that process
+                std::string pid = token2.substr(0,pos);
+                std::string var = token2.substr(pos,token2.size()-pos);
+                std::cout << pid << " " << var << std::endl;
             }
         }
 
@@ -189,13 +203,13 @@ void allocateVariable(uint32_t pid, std::string var_name, DataType type, uint32_
         uint32_t startPage = page_table->getPageNumber(virMemAddr);
         uint32_t endPage = 0;
         if(usableSpace < sizeOfVariable){
-            mmu->removeFreeSpace(pid,virMemAddr,usableSpace,var_name,type); //LOOK AT REMOVE FREE SPACE
+            mmu->removeFreeSpace(pid,virMemAddr,usableSpace,var_name,type);
             amountStored += usableSpace / sizeOfType;
             sizeOfVariable = sizeOfVariable - usableSpace;
             endPage = page_table->getPageNumber(virMemAddr + usableSpace -1);
         }
         else{
-            mmu->removeFreeSpace(pid,virMemAddr,sizeOfVariable,var_name,type); //LOOK AT REMOVE FREE SPACE
+            mmu->removeFreeSpace(pid,virMemAddr,sizeOfVariable,var_name,type);
             amountStored = num_elements;
             endPage = page_table->getPageNumber(virMemAddr + sizeOfVariable -1);
         }
