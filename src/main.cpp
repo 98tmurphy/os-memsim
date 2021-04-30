@@ -3,6 +3,7 @@
 #include <cstring>
 #include "mmu.h"
 #include "pagetable.h"
+#include <typeinfo>
 
 void printStartMessage(int page_size);
 void createProcess(int text_size, int data_size, Mmu *mmu, PageTable *page_table);
@@ -11,6 +12,7 @@ void setVariable(uint32_t pid, std::string var_name, uint32_t offset, void *valu
 void freeVariable(uint32_t pid, std::string var_name, Mmu *mmu, PageTable *page_table);
 void terminateProcess(uint32_t pid, Mmu *mmu, PageTable *page_table);
 uint32_t calculateSize(DataType type,uint32_t num_elements);
+bool isNumber(std::string input);
 
 int main(int argc, char **argv)
 {
@@ -62,57 +64,91 @@ int main(int argc, char **argv)
         }
 
         else if(tokens[0] == "allocate"){
-            if(tokens[3] == "char"){
+            if(!isNumber(tokens[1])){
+                std::cout << "error: process not found" << std::endl;
+            }
+            else if(!mmu->containsPid(stoi(tokens[1],0,10))){
+                std::cout << "error: process not found" << std::endl;
+            }
+            else if(mmu->getVirtualAddr(stoi(tokens[1],0,10),tokens[2]) != -1){
+                std::cout << "error: variable already exists" <<std::endl;
+            }
+            else if(tokens[3] == "char"){
                 allocateVariable(stoi(tokens[1],0,10),tokens[2],DataType::Char,stoi(tokens[4],0,10),mmu,page_table);
             }
-            if(tokens[3] == "short"){
+            else if(tokens[3] == "short"){
                 allocateVariable(stoi(tokens[1],0,10),tokens[2],DataType::Short,stoi(tokens[4],0,10),mmu,page_table);
             }
-            if(tokens[3] == "int"){
+            else if(tokens[3] == "int"){
                 allocateVariable(stoi(tokens[1],0,10),tokens[2],DataType::Int,stoi(tokens[4],0,10),mmu,page_table);
             }
-            if(tokens[3] == "float"){
+            else if(tokens[3] == "float"){
                 allocateVariable(stoi(tokens[1],0,10),tokens[2],DataType::Float,stoi(tokens[4],0,10),mmu,page_table);
             }
-            if(tokens[3] == "double"){
+            else if(tokens[3] == "double"){
                 allocateVariable(stoi(tokens[1],0,10),tokens[2],DataType::Double,stoi(tokens[4],0,10),mmu,page_table);
             }
-            if(tokens[3] == "long"){
+            else if(tokens[3] == "long"){
                 allocateVariable(stoi(tokens[1],0,10),tokens[2],DataType::Long,stoi(tokens[4],0,10),mmu,page_table);
             }
         }
 
         else if(tokens[0] == "set"){
-
+            if(!isNumber(tokens[1])){
+                std::cout << "error: process not found" << std::endl;
+            }
+            else if(!mmu->containsPid(stoi(tokens[1],0,10))){
+                std::cout << "error: process not found" << std::endl;
+            }
+            else if(mmu->getVirtualAddr(stoi(tokens[1],0,10),tokens[2]) != -1){
+                std::cout << "error: variable already exists" <<std::endl;
+            }
+            else{
+                for(int index = 3; index < tokens.size(); index++){
+                //setVariable(stoi(tokens[1],0,10),tokens[2],(##NEED THE OFFSET##),tokens[index],mmu,page_table);
+                }
+            }
         }
 
         // print command
         else if(tokens[0] == "print"){
-            int pos;
-            std::string token2 = (std::string)tokens[2];
             if(tokens[1] == "mmu"){
                 mmu->print();
             }
             else if(tokens[1] == "page"){
                 page_table->print();
             }
-            else if(tokens[1] == "process"){
+            else if(tokens[1] == "processes"){
                 mmu->printProcessesIDs();
             }
             //this aint working
-            else if((pos = token2.find(":")) != std::string::npos){ //"<PID:<var_name>", print the value of the variable for that process
-                std::string pid = token2.substr(0,pos);
-                std::string var = token2.substr(pos,token2.size()-pos);
-                std::cout << pid << " " << var << std::endl;
+            else if(tokens[1].find(":") != std::string::npos){ //"<PID:<var_name>", print the value of the variable for that process
+                
             }
         }
 
         else if(tokens[0] == "free"){
-            freeVariable(stoi(tokens[1],0,10),tokens[2],mmu,page_table);
+            if(!isNumber(tokens[1])){
+                std::cout << "error: process not found" << std::endl;
+            }
+            else if(!mmu->containsPid(stoi(tokens[1],0,10))){
+                std::cout << "error: process not found" << std::endl;
+            }
+            else if(mmu->getVirtualAddr(stoi(tokens[1],0,10),tokens[2]) != -1){
+                std::cout << "error: variable already exists" <<std::endl;
+            }
+            else{
+                freeVariable(stoi(tokens[1],0,10),tokens[2],mmu,page_table);
+            }
         }
 
         else if(tokens[0] == "terminate"){
-            terminateProcess(stoi(tokens[1],0,10), mmu, page_table);
+            if(!isNumber(tokens[1])){
+                std::cout << "error: process not found" << std::endl;
+            }
+            else{
+                terminateProcess(stoi(tokens[1],0,10), mmu, page_table);
+            }
         }
 
         else{
@@ -196,6 +232,7 @@ void allocateVariable(uint32_t pid, std::string var_name, DataType type, uint32_
     uint32_t sizeOfVariable = calculateSize(type,num_elements);
     uint32_t sizeOfType = calculateSize(type,1);
     uint32_t amountStored = 0;
+    std::cout << mmu->getVirAddressOfFreeSpace(pid,sizeOfType) << std::endl;
     while(amountStored != num_elements){
         uint32_t virMemAddr = mmu->getVirAddressOfFreeSpace(pid,sizeOfType);
         uint32_t sizeOfFreeSpace = mmu->getSizeOfFreeSpace(pid,virMemAddr);
@@ -229,6 +266,10 @@ void setVariable(uint32_t pid, std::string var_name, uint32_t offset, void *valu
     //   - insert `value` into `memory` at physical address
     //   * note: this function only handles a single element (i.e. you'll need to call this within a loop when setting
     //           multiple elements of an array)
+    uint32_t virAddr = mmu->getVirtualAddr(pid,var_name);
+    uint32_t phyAddr = page_table->getPhysicalAddress(pid,virAddr+offset);
+    std::cout << typeid(value).name() << std::endl;
+    //memcpy(memory,value,)
 }
 
 void freeVariable(uint32_t pid, std::string var_name, Mmu *mmu, PageTable *page_table)
@@ -245,20 +286,17 @@ void freeVariable(uint32_t pid, std::string var_name, Mmu *mmu, PageTable *page_
     }
     else{
         uint32_t virtualAddr = mmu->getVirtualAddr(pid,var_name);
-        mmu->removeVariable(pid,var_name,virtualAddr);
+        mmu->removeVariable(pid,var_name);
+        //free the pages
     }
 }
 
 void terminateProcess(uint32_t pid, Mmu *mmu, PageTable *page_table)
 {
-    // TODO: implement this!
-    //   - remove process from MMU
-    //   - free all pages associated with given process
     if(mmu->pidExists(pid)){
         uint32_t largestPageNum = page_table->getPageNumber(mmu->getLargestVirtualAddress(pid));
         page_table->removeProcess(pid,largestPageNum);
         mmu->removeProcess(pid);
-
     }
     else{
         std::cout << "error: process not found" << std::endl;
@@ -278,4 +316,13 @@ uint32_t calculateSize(DataType type, uint32_t num_elements){
     else{
         return 8 * num_elements;
     }
+}
+
+bool isNumber(std::string input){
+    for(int i = 0; i < input.size(); i++){
+        if(!std::isdigit(input[i])){
+            return false;
+        }
+    }
+    return true;
 }
