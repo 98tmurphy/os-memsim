@@ -43,6 +43,7 @@ public:
     uint32_t getPageNumber(uint32_t virtualAddr);
     bool keyExist(uint32_t pid, uint32_t pageNum);
     void removeProcess(uint32_t pid,uint32_t largetPage);
+    void removeFreePages(uint32_t pid, std::vector<uint32_t> pages, std::vector<uint32_t> addresses);
 };
 
 #endif // __PAGETABLE_H_
