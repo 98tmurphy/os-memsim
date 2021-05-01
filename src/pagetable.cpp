@@ -108,10 +108,12 @@ void PageTable::print()
     }
 }
 
+//returns the page number of the inputted virtual address
 uint32_t PageTable::getPageNumber(uint32_t virtualAddr){
     return virtualAddr / _page_size;
 }
 
+//checks if the key exists in the map
 bool PageTable::keyExist(uint32_t pid, uint32_t pageNum){
     std::string entry = std::to_string(pid) + "|" + std::to_string(pageNum);
     if(_table.find(entry) == _table.end()){
@@ -120,6 +122,7 @@ bool PageTable::keyExist(uint32_t pid, uint32_t pageNum){
     return true;
 }
 
+//removes all pages associated with the inputted pid
 void PageTable::removeProcess(uint32_t pid, uint32_t largestPage){
     std::string entry;
     for(int i = 0; i < largestPage; i++){
@@ -128,6 +131,7 @@ void PageTable::removeProcess(uint32_t pid, uint32_t largestPage){
     }
 }
 
+//remove any page that does have any variables that is associated with the pid
 void PageTable::removeFreePages(uint32_t pid, std::vector<uint32_t> pages, std::vector<uint32_t> addresses){
     std::string entry;
     for(int i = 0; i < pages.size(); i+=2){

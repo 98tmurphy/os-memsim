@@ -35,8 +35,6 @@ public:
     void print();
     void removeProcess(uint32_t pid);
     void removeVariable(uint32_t pid, std::string var);
-    bool pidExists(uint32_t pid);
-    bool varExists(uint32_t pid, std::string var);
     void printProcessesIDs();
     int getNextVirtualAddr(int pid);
     uint32_t getVirtualAddr(int pid, std::string var);

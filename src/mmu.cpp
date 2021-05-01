@@ -29,6 +29,7 @@ uint32_t Mmu::createProcess()
     return proc->pid;
 }
 
+//add variable to the process
 void Mmu::addVariableToProcess(uint32_t pid, std::string var_name, DataType type, uint32_t size, uint32_t address)
 {
     int i;
@@ -55,6 +56,7 @@ void Mmu::addVariableToProcess(uint32_t pid, std::string var_name, DataType type
     }
 }
 
+//print
 void Mmu::print()
 {
     int i, j;
@@ -94,7 +96,7 @@ void Mmu::removeProcess(uint32_t pid){
         if(_processes[i]->pid == pid){
             for(int j = 0; j < _processes[i]->variables.size(); j++){
                 if(_processes[i]->variables[j]->name != "<FREE_SPACE>"){
-                    memoryUsed = memoryUsed - _processes[i]->variables[j]->size;
+                    memoryUsed = memoryUsed - _processes[i]->variables[j]->size; //decrease amount of space used
                 }
             }
             _processes.erase(_processes.begin()+i);
@@ -113,16 +115,18 @@ void Mmu::removeFirstFree(uint32_t pid){
     }
 }
 
-//Replaces a free space with a new variable and 
+//Replaces a free variable, and replaces it with a free space
 void Mmu::removeVariable(uint32_t pid, std::string var){
     for (int i = 0; i < _processes.size(); i++){
         if(_processes[i]->pid == pid){
             uint32_t size = _processes[i]->variables.size();
             for(int j = 0; j < size; j++){
+                //remove any 0 size free spaces
                 if(_processes[i]->variables[j]->name == "<FREE_SPACE>" && _processes[i]->variables[j]->size == 0){
                     _processes[i]->variables.erase(_processes[i]->variables.begin() + j);
                     j--;
                 }
+                //change the variable
                 else if(_processes[i]->variables[j]->name == var){
                     _processes[i]->variables[j]->name = "<FREE_SPACE>";
                     _processes[i]->variables[j]->type = DataType::FreeSpace;
@@ -133,36 +137,14 @@ void Mmu::removeVariable(uint32_t pid, std::string var){
     }
 }
 
-//Checks if the pid exists
-bool Mmu::pidExists(uint32_t pid){
-    for(int i = 0; i < _processes.size(); i++){
-        if(_processes[i]->pid == pid){
-            return true;
-        }
-    }
-    return false;
-}
-
-//checks if the var exists
-bool Mmu::varExists(uint32_t pid, std::string var){
-    for(int i = 0; i < _processes.size(); i++){
-        if(_processes[i]->pid == pid){
-            for(int j = 0; j < _processes[i]->variables.size(); j++){
-                if(_processes[i]->variables[j]->name == var){
-                    return true;
-                }
-            }
-        }
-    }
-    return false;
-}
-
+//prints the ID's of all processes
 void Mmu::printProcessesIDs(){
     for(int i = 0; i < _processes.size(); i++){
         std::cout << _processes[i]->pid << std::endl;
     }
 }
 
+//Address just virtual address when creating a new process
 int Mmu::getNextVirtualAddr(int pid){
     int sumOfAddrs = -1 * _max_size;
     for(int i = 0; i < _processes.size(); i++){
@@ -215,11 +197,13 @@ uint32_t Mmu::removeFreeSpace(uint32_t pid,uint32_t virMemAddr,uint32_t sizeOfVa
             for(int j = 0; j < _processes[i]->variables.size(); j++){
                 uint32_t size = _processes[i]->variables[j]->size;
 
+                //if found an open free space
                 if(_processes[i]->variables[j]->virtual_address == virMemAddr){
                     _processes[i]->variables[j]->name = var_name;
                     _processes[i]->variables[j]->type = type;
                     _processes[i]->variables[j]->size = sizeOfVariable;
 
+                    //create the new free space
                     Variable *newFree = new Variable();
                     newFree->name = "<FREE_SPACE>";
                     newFree->type = DataType::FreeSpace;
@@ -239,6 +223,7 @@ uint32_t Mmu::removeFreeSpace(uint32_t pid,uint32_t virMemAddr,uint32_t sizeOfVa
     return 0;
 }
 
+//return the size of the free space with a virtual mem of virMemAddr, if not found return -1
 uint32_t Mmu::getSizeOfFreeSpace(uint32_t pid, uint32_t virMemAddr){
     for(int i = 0; i < _processes.size(); i++){
         if(_processes[i]->pid == pid){
@@ -252,6 +237,7 @@ uint32_t Mmu::getSizeOfFreeSpace(uint32_t pid, uint32_t virMemAddr){
     return -1;
 }
 
+//Find the process with the inputted pid that has the highest virtual address
 uint32_t Mmu::getLargestVirtualAddress(uint32_t pid){
     int maxSoFar = 0;
     std::cout << _processes.size() << std::endl;
@@ -267,6 +253,7 @@ uint32_t Mmu::getLargestVirtualAddress(uint32_t pid){
     return maxSoFar;
 }
 
+//returns true if the mmu has the process number
 bool Mmu::containsPid(uint32_t pid){
     for(int index = 0; index < _processes.size(); index++){
         if(_processes[index]->pid == pid){
@@ -276,37 +263,35 @@ bool Mmu::containsPid(uint32_t pid){
     return false;
 }
 
+//returns true if there is space in memory
 bool Mmu::spaceInMemory(uint32_t size){
     return memoryUsed + size <= _max_size;
 }
 
+
+//returns the ranges of the free spaces in a vector of ints
+//first index is the start virmem, and and the second index is the ending virmem
+//this will include all free spaces
 std::vector<uint32_t> Mmu::getFreeSpaceRanges(uint32_t pid){
     std::vector<uint32_t> result;
     uint32_t holdVirAddr;
-    uint32_t offset = 1;
     for(int i = 0; i < _processes.size(); i++){
         if(_processes[i]->pid == pid){
             for(int j = 0; j < _processes[i]->variables.size(); j++){
                 if(_processes[i]->variables[j]->name == "<FREE_SPACE>" && j != _processes[i]->variables.size()-1){
                     result.push_back(_processes[i]->variables[j]->virtual_address);
                     holdVirAddr = _processes[i]->variables[j]->virtual_address + (_processes[i]->variables[j]->size - 1);
-                    while(j + offset < _processes[i]->variables.size()){
-                        if(_processes[i]->variables[j+offset]->name == "<FREE_SPACE>"){
-                            if(j+offset == _processes[i]->variables.size() - 1){
-                                holdVirAddr += 32768;
-                            }
-                            else{
-                                holdVirAddr += _processes[i]->variables[j+offset]->size;
-                            }
-                            offset++;
+                    while(_processes[i]->variables[j]->name == "<FREE_SPACE>"){
+                        if(j == _processes[i]->variables.size() - 1){
+                            holdVirAddr += 32768;//max size of a page size
+                            break;
                         }
                         else{
-                            offset = _processes[i]->variables.size();
+                            holdVirAddr += _processes[i]->variables[j]->size;
+                            j++;
                         }
                     }
                     result.push_back(holdVirAddr);
-                    j += (offset - 1);
-                    offset = 1;
                 }
             }
         }
