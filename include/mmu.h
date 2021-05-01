@@ -47,6 +47,7 @@ public:
     bool containsPid(uint32_t pid);
     bool spaceInMemory(uint32_t size);
     std::vector<uint32_t> getFreeSpaceRanges(uint32_t pid);
+    DataType getDataType(uint32_t pid, std::string var);
 };
 
 #endif // __MMU_H_

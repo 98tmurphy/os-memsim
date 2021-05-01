@@ -67,7 +67,7 @@ void Mmu::print()
     {
         for (j = 0; j < _processes[i]->variables.size(); j++)
         {
-            //if(_processes[i]->variables[j]->name != "<FREE_SPACE>"){
+            if(_processes[i]->variables[j]->name != "<FREE_SPACE>"){
                 std::cout << " " << _processes[i]->pid << " | ";
 
                 std::string hold = _processes[i]->variables[j]->name;
@@ -85,7 +85,7 @@ void Mmu::print()
                     hold = hold + " ";
                 }
                 std:: cout << hold << temp << std::dec << std::endl;
-            //}
+            }
         }
     }
 }
@@ -240,7 +240,6 @@ uint32_t Mmu::getSizeOfFreeSpace(uint32_t pid, uint32_t virMemAddr){
 //Find the process with the inputted pid that has the highest virtual address
 uint32_t Mmu::getLargestVirtualAddress(uint32_t pid){
     int maxSoFar = 0;
-    std::cout << _processes.size() << std::endl;
     for(int i = 0; i < _processes.size(); i++){
         if(_processes[i]->pid == pid){
             for(int j = 0; j < _processes[i]->variables.size(); j++){
@@ -297,4 +296,17 @@ std::vector<uint32_t> Mmu::getFreeSpaceRanges(uint32_t pid){
         }
     }
     return result;
+}
+
+DataType Mmu::getDataType(uint32_t pid, std::string var){
+    for(int i = 0; i < _processes.size(); i++){
+        if(_processes[i]->pid == pid){
+            for(int j = 0; j < _processes[i]->variables.size(); j++){
+                if(_processes[i]->variables[j]->name == var){
+                    return _processes[i]->variables[j]->type;
+                }
+            }
+        }
+    }
+    return DataType::Char;
 }

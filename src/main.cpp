@@ -103,8 +103,8 @@ int main(int argc, char **argv)
                 std::cout << "error: variable not found" <<std::endl;
             }
             else{
-                for(int index = 3; index < tokens.size(); index++){
-                    //setVariable(stoi(tokens[1],0,10),tokens[2],(##NEED THE OFFSET##),tokens[index],mmu,page_table);
+                for(int index = 4; index < tokens.size(); index++){
+                    setVariable(stoi(tokens[1],0,10),tokens[2],stoi(tokens[3],0,10),&tokens[index],mmu,page_table,memory);
                 }
             }
         }
@@ -272,15 +272,12 @@ void allocateVariable(uint32_t pid, std::string var_name, DataType type, uint32_
 //Never managed to implement
 void setVariable(uint32_t pid, std::string var_name, uint32_t offset, void *value, Mmu *mmu, PageTable *page_table, void *memory)
 {
-    // TODO: implement this!
-    //   - look up physical address for variable based on its virtual address / offset
-    //   - insert `value` into `memory` at physical address
-    //   * note: this function only handles a single element (i.e. you'll need to call this within a loop when setting
-    //           multiple elements of an array)
     uint32_t virAddr = mmu->getVirtualAddr(pid,var_name);
     uint32_t phyAddr = page_table->getPhysicalAddress(pid,virAddr+offset);
-    std::cout << typeid(value).name() << std::endl;
-    //memcpy(memory,value,)
+
+    uint32_t size = calculateSize(mmu->getDataType(pid,var_name),1);
+
+    memcpy((uint8_t*)memory + phyAddr,value,size);
 }
 
 //Free command
@@ -290,13 +287,9 @@ void freeVariable(uint32_t pid, std::string var_name, Mmu *mmu, PageTable *page_
     mmu->removeVariable(pid,var_name);
     std::vector<uint32_t> freeSpaceRanges = mmu->getFreeSpaceRanges(pid); //calculate ranges of free spaces
     std::vector<uint32_t> pages;
-    std::cout << freeSpaceRanges[0] << " " << freeSpaceRanges[1] << std::endl;
-    std::cout << freeSpaceRanges[2] << " " << freeSpaceRanges[3] << std::endl;
     for(int i = 0; i < freeSpaceRanges.size(); i++){
         pages.push_back(page_table->getPageNumber(freeSpaceRanges[i]));
     }
-    std::cout << pages[0] << " " << pages[1] << std::endl;
-    std::cout << pages[2] << " " << pages[3] << std::endl;
     page_table->removeFreePages(pid,pages,freeSpaceRanges);
 }
 
