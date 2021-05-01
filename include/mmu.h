@@ -1,6 +1,3 @@
-#ifndef __MMU_H_
-#define __MMU_H_
-
 #include <iostream>
 #include <string>
 #include <vector>
@@ -24,6 +21,7 @@ private:
     uint32_t _next_pid;
     uint32_t _max_size;
     std::vector<Process*> _processes;
+    uint32_t memoryUsed;
 
 public:
     Mmu(int memory_size);
@@ -33,7 +31,7 @@ public:
     void addVariableToProcess(uint32_t pid, std::string var_name, DataType type, uint32_t size, uint32_t address);
     void print();
     void removeProcess(uint32_t pid);
-    void removeVariable(uint32_t pid, std::string var, uint32_t virtualAddr);
+    void removeVariable(uint32_t pid, std::string var);
     bool pidExists(uint32_t pid);
     bool varExists(uint32_t pid, std::string var);
     void printProcessesIDs();
@@ -45,6 +43,9 @@ public:
     uint32_t getSizeOfFreeSpace(uint32_t pid,uint32_t virMemAddr);
     void removeFirstFree(uint32_t pid);
     uint32_t getLargestVirtualAddress(uint32_t pid);
+    bool containsPid(uint32_t pid);
+    bool spaceInMemory(uint32_t size);
+    std::vector<uint32_t> getFreeSpaceRanges(uint32_t pid);
 };
 
 #endif // __MMU_H_
