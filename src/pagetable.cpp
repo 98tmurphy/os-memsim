@@ -109,14 +109,7 @@ void PageTable::print()
 }
 
 uint32_t PageTable::getPageNumber(uint32_t virtualAddr){
-    int numOfOffsetBits = (int)log2(_page_size);
-    int page = virtualAddr >> numOfOffsetBits;
-    if(page == 0){
-        return 0;
-    }
-    else{
-        return page + 1;
-    }
+    return virtualAddr / _page_size;
 }
 
 bool PageTable::keyExist(uint32_t pid, uint32_t pageNum){
@@ -132,5 +125,34 @@ void PageTable::removeProcess(uint32_t pid, uint32_t largestPage){
     for(int i = 0; i < largestPage; i++){
         entry = std::to_string(pid) + "|" + std::to_string(i);
         _table.erase(entry);
+    }
+}
+
+void PageTable::removeFreePages(uint32_t pid, std::vector<uint32_t> pages, std::vector<uint32_t> addresses){
+    std::string entry;
+    for(int i = 0; i < pages.size(); i+=2){
+        if(pages[i] == pages[i+1]){
+            if(addresses[i+1] - addresses[i] == _page_size - 1){
+                entry = std::to_string(pid) + "|" + std::to_string(pages[i]);
+                _table.erase(entry);
+            }
+        }
+        
+        else{
+            if(pages[i+1] - pages[i] > 1){
+                for(int j = pages[i]+1; j < pages[i+1]; j++){
+                    entry = std::to_string(pid) + "|" + std::to_string(j);
+                    _table.erase(entry);
+                }
+            }
+            if(addresses[i] % _page_size == 0){
+                entry = std::to_string(pid) + "|" + std::to_string(pages[i]);
+                _table.erase(entry);
+            }
+            if(addresses[i+1] % _page_size == _page_size - 1){
+                entry = std::to_string(pid) + "|" + std::to_string(pages[i+1]);
+                _table.erase(entry);
+            }
+        }
     }
 }
