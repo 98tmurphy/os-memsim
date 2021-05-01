@@ -1,3 +1,6 @@
+#ifndef __MMU_H_
+#define __MMU_H_
+
 #include <iostream>
 #include <string>
 #include <vector>
